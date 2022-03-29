@@ -22,7 +22,7 @@ library(table1)
 
 ``` {r, echo = FALSE}
 
-survey_sample <- read_csv("survey_sample.csv")
+survey_sample <- read_csv("sample_inclusion.csv")
 
 survey_sample <- survey_sample %>%
   mutate(pct_white = pct_white *100) %>%
