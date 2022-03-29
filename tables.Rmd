@@ -1,0 +1,312 @@
+---
+title: "Tables - Aim 1: Audit Survey of Pharmacy Vaccine Availability"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages, include=FALSE}
+
+# load packages
+library(stats)
+library(janitor)
+library(knitr)
+library(scales)
+library(arsenal)
+library(table1)
+library(sjPlot)
+library(tidyverse)
+
+```
+
+
+```{r data, echo = FALSE}
+load(file = "analytic_sample.Rda")
+
+analytic_sample <- analytic_sample %>%
+  mutate(pct_white = pct_white * 100) %>%
+  mutate(prop_65plus = prop_65plus *100)
+  
+
+
+```
+
+\
+
+## DESCRIPTIVE CHARACTERISTICS ----
+
+#### TABLE 1. Descriptive statistics of counties in analytic sample of 384 pharmacies 
+
+```{r, echo=FALSE}
+
+label(analytic_sample$pharmtype) <- "Pharmacy type"
+label(analytic_sample$median_income) <- "Median income, $"
+label(analytic_sample$pct_white) <- "% White non-Hispanic population"
+label(analytic_sample$total_pop) <- "Total population"
+label(analytic_sample$waittime_sec) <- "Wait time (seconds)"
+label(analytic_sample$prop_65plus) <- "% of county population 65+"
+
+analytic_sample$metro <-
+  factor(analytic_sample$metro)
+label(analytic_sample$region) <- "Region"
+
+
+analytic_sample$metro <-
+  factor(analytic_sample$metro,
+         levels=c(1,0),
+         labels=c("Metropolitan area",
+                  "Non-metropolitan area"))
+label(analytic_sample$metro) <- "Metro area"
+
+
+table1(~ region + metro + median_income + pct_white + total_pop + prop_65plus + waittime_sec | pharmtype, data = analytic_sample)
+
+table1(~ pharmtype | region, data = analytic_sample)
+table1(~ pharmtype | metro, data = analytic_sample)
+
+
+
+```
+\
+\
+\
+\
+
+
+#### TABLE 2a. Summary of availability of vaccines at chain vs. independent pharmacies 
+
+```{r, echo=FALSE}
+
+# shingles
+
+
+analytic_sample$shing_avail <-
+  factor(analytic_sample$shing_avail,
+         levels=c(1,0),
+         labels=c("Available",
+                  "Unavailable"))
+
+label(analytic_sample$shing_avail) <- "Shingles vaccine"
+
+# flu
+
+analytic_sample$flu_avail <-
+  factor(analytic_sample$flu_avail,
+         levels=c(1,0),
+         labels=c("Available",
+                  "Unavailable"))
+
+label(analytic_sample$flu_avail) <- "Regular flu vaccine"
+
+# hd flu
+
+analytic_sample$hdflu_avail <-
+  factor(analytic_sample$hdflu_avail,
+         levels=c(1,0),
+         labels=c("Available",
+                  "Unavailable"))
+
+label(analytic_sample$hdflu_avail) <- "65+ flu vaccine"
+
+table1(~ shing_avail + flu_avail + hdflu_avail | pharmtype, data = analytic_sample)
+
+
+test_shing <- chisq.test(table(analytic_sample$pharmtype, analytic_sample$shing_avail))
+test_shing
+
+test_shing$statistic
+test_shing$p.value
+
+```
+\
+\
+\
+\
+
+#### TABLE 2b. Chi-square test of differences in availability of vaccines at chain vs. independent pharmacies 
+
+```{r, echo=FALSE}
+
+pvalue <- function(x, ...) {
+    # Construct vectors of data y, and groups (strata) g
+    y <- unlist(x)
+    g <- factor(rep(1:length(x), times=sapply(x, length)))
+    if (is.numeric(y)) {
+        # For numeric variables, perform a standard 2-sample t-test
+        p <- t.test(y ~ g)$p.value
+    } else {
+        # For categorical variables, perform a chi-squared test of independence
+        p <- chisq.test(table(y, g))$p.value
+    }
+    # Format the p-value, using an HTML entity for the less-than sign.
+    # The initial empty string places the output on the line below the variable label.
+    c("", sub("<", "&lt;", format.pval(p, digits=3, eps=0.001)))
+}
+
+table1(~ shing_avail + flu_avail + hdflu_avail | pharmtype,
+    data=analytic_sample, overall=F, extra.col=list(`P-value`=pvalue))
+
+```
+\
+\
+\
+\
+
+## CHI-SQUARE TESTS: ALL VARIABLES 
+\
+
+#### APPENDIX C. Chi-square tests and t-tests for all variables correlated with shingles vaccine availability
+
+```{r, echo=FALSE, warning=FALSE}
+
+pvalue <- function(x, ...) {
+    # Construct vectors of data y, and groups (strata) g
+    y <- unlist(x)
+    g <- factor(rep(1:length(x), times=sapply(x, length)))
+    if (is.numeric(y)) {
+        # For numeric variables, perform a standard 2-sample t-test
+        p <- t.test(y ~ g)$p.value
+    } else {
+        # For categorical variables, perform a chi-squared test of independence
+        p <- chisq.test(table(y, g))$p.value
+    }
+    # Format the p-value, using an HTML entity for the less-than sign.
+    # The initial empty string places the output on the line below the variable label.
+    c("", sub("<", "&lt;", format.pval(p, digits=3, eps=0.001)))
+}
+
+table1(~ pharmtype + region + metro + median_income + pct_white + total_pop + prop_65plus | shing_avail,
+    data=analytic_sample, overall=F, extra.col=list(`P-value`=pvalue))
+
+```
+\
+```{r, echo=FALSE}
+
+table1(~ shing_avail | pharmtype, data = analytic_sample)
+table1(~ shing_avail | region, data = analytic_sample)
+table1(~ shing_avail | metro, data = analytic_sample)
+```
+\
+\
+\
+
+#### APPENDIX D. Chi-square tests and t-tests for all variables correlated with regular flu vaccine availability
+
+```{r, echo=FALSE}
+
+table1(~ pharmtype + region + median_income + pct_white + total_pop + prop_65plus | flu_avail,
+    data=analytic_sample, overall=F, extra.col=list(`P-value`=pvalue))
+
+```
+\
+```{r, echo=FALSE}
+
+table1(~ flu_avail | pharmtype, data = analytic_sample)
+table1(~ flu_avail | region, data = analytic_sample)
+table1(~ flu_avail | metro, data = analytic_sample)
+```
+\
+\
+
+#### APPENDIX E. Chi-square tests and t-tests: senior flu vaccine availability
+
+```{r, echo=FALSE}
+
+table1(~ pharmtype + region + median_income + pct_white + total_pop + prop_65plus | hdflu_avail,
+    data=analytic_sample, overall=F, extra.col=list(`P-value`=pvalue))
+
+```
+\
+```{r, echo=FALSE}
+
+table1(~ hdflu_avail | pharmtype, data = analytic_sample)
+table1(~ hdflu_avail | region, data = analytic_sample)
+table1(~ hdflu_avail | metro, data = analytic_sample)
+```
+\
+\
+\
+
+## LOGISTIC REGRESSIONS
+\
+
+#### Appendix F. Logistic regression coefficients: shingles availability
+
+```{r, echo=FALSE}
+
+
+logit_shing <- glm(shing_avail ~  pharmtype  + region + metro+ median_income + pct_white + total_pop +prop_65plus, data = analytic_sample, family = "binomial")
+
+tab_model(logit_shing)
+
+```
+\
+\
+\
+\
+
+#### Appendix G. Logistic regression coefficients: regular flu availability
+
+```{r, echo=FALSE}
+
+
+logit_flu <- glm(flu_avail ~  pharmtype  + region + metro+ median_income + pct_white + total_pop +prop_65plus, data = analytic_sample, family = "binomial")
+
+tab_model(logit_flu)
+
+```
+\
+\
+\
+\
+
+#### Appendix H. Logistic regression coefficients: 65+ flu availability
+
+```{r, echo=FALSE}
+
+
+logit_hdflu <- glm(hdflu_avail ~  pharmtype  + region + metro+ median_income + pct_white + total_pop +prop_65plus, data = analytic_sample, family = "binomial")
+
+tab_model(logit_hdflu)
+
+```
+\
+\
+\
+\
+
+
+#### Quick summary stats of county-level variables for pharmacies
+
+##### Mean of median incomes in county 
+* **Mean**: `r format(mean(analytic_sample$median_income), scientific=FALSE)`  
+* **SD**:  `r format(sd(analytic_sample$median_income), scientific=FALSE)`
+
+##### Population in county
+* **Mean**: `r format(mean(analytic_sample$total_pop), scientific=FALSE)`  
+* **SD**:   `r format(sd(analytic_sample$total_pop), scientific=FALSE)`
+
+##### Percent White non-Hispanic residents in county
+* **Mean**: `r percent(mean(analytic_sample$pct_white), accuracy=.1)`  
+* **SD**:   `r percent(sd(analytic_sample$pct_white), accuracy=.1)`
+
+##### Percent residents in county 65+
+* **Mean**: `r percent(mean(analytic_sample$prop_65plus), accuracy=.1)`  
+* **SD**:   `r percent(sd(analytic_sample$prop_65plus), accuracy=.1)`  
+
+##### Time to reach pharmacist in seconds
+
+* **Mean**: `r round(mean(analytic_sample$waittime_sec, na.rm=TRUE), 1)` seconds
+* **SD**: `r round(sd(analytic_sample$waittime_sec, na.rm = TRUE), 1)`
+* **Number of missing time values**: `r sum(is.na(analytic_sample$waittime_sec))`
+
+
+#### Resources:
+* https://cran.r-project.org/web/packages/table1/vignettes/table1-examples.html 
+* https://cran.r-project.org/web/packages/gtsummary/vignettes/inline_text.html
+* https://cran.r-project.org/web/packages/sjPlot/vignettes/tab_model_estimates.html
+* https://statsandr.com/blog/chi-square-test-of-independence-in-r/#chi-square-test-of-independence-in-r
+* https://cran.r-project.org/web/packages/arsenal/vignettes/tableby.html

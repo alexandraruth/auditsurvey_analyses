@@ -1,0 +1,91 @@
+---
+title: "table_inclusion"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages, include=FALSE}
+
+# load packages
+
+library(tidyverse)
+library(knitr)
+library(arsenal)
+library(table1)
+
+
+```
+
+``` {r, echo = FALSE}
+
+survey_sample <- read_csv("survey_sample.csv")
+
+survey_sample <- survey_sample %>%
+  mutate(pct_white = pct_white *100) %>%
+  mutate(prop_65plus = prop_65plus *100)
+  
+```
+
+#### Appendix. Summary of included and excluded pharmacies
+
+
+```{r, echo=FALSE}
+
+survey_sample$inclusion <-
+ factor(survey_sample$inclusion,
+        levels=c(0,1,2,3),
+         labels=c("Included",
+                  "Excluded (number not working)",
+                  "Excluded (don't offer vaccines)",
+                  "Excluded (unreachable after 5 calls)"))
+
+label(survey_sample$inclusion) <- "Reason for exclusion"
+
+label(survey_sample$pharmtype) <- "Pharmacy type"
+label(survey_sample$median_income) <- "Median income, $"
+label(survey_sample$pct_white) <- "% White non-Hispanic population"
+label(survey_sample$total_pop) <- "Total population"
+label(survey_sample$waittime_sec) <- "Wait time (seconds)"
+label(survey_sample$prop_65plus) <- "% of county population 65+"
+
+survey_sample$metro <-
+  factor(survey_sample$metro)
+label(survey_sample$region) <- "Region"
+
+survey_sample$metro <-
+  factor(survey_sample$metro,
+         levels=c(1,0),
+         labels=c("Metropolitan area",
+                  "Non-metropolitan area"))
+label(survey_sample$metro) <- "Urbanicity"
+
+table1(~ pharmtype + region + metro + median_income + pct_white + total_pop + prop_65plus| inclusion, data = survey_sample)
+
+
+
+```
+
+\
+```{r}
+
+
+table1(~ inclusion | pharmtype, data = survey_sample)
+table1(~ inclusion | region, data = survey_sample)
+table1(~ inclusion | metro, data = survey_sample)
+
+
+```
+\
+```{r}
+
+
+table1(~ pharmtype + region + metro + median_income + pct_white + total_pop + prop_65plus + inclusion, data = survey_sample)
+
+```
+\
+\
+\

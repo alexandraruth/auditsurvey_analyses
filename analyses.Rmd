@@ -1,0 +1,172 @@
+---
+title: "Data Analysis: Audit survey"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages, include=FALSE}
+
+# load packages
+library(stats)
+library(janitor)
+library(knitr)
+library(scales)
+library(arsenal)
+library(table1)
+
+```
+
+### Data
+
+```{r data, echo = FALSE}
+load(file = "analytic_sample.Rda")
+
+kable(head(analytic_sample))
+
+```
+
+
+### Descriptive characteristics
+
+-------------------------------------------------------------
+
+
+
+#### Pharmacy characteristics
+
+Independent vs. chain pharmacies
+
+
+```{r, echo = FALSE}
+tabyl(analytic_sample, pharmtype)
+
+# Do we see a meaningful difference between the prevalence of independent vs. chain pharmacies in sample?
+
+chi_pharmtype <- chisq.test(x = table(analytic_sample$pharmtype))
+
+chi_pharmtype
+
+```
+
+
+#### County characteristics in which pharmacies are located
+
+##### Mean of median incomes in county 
+* **Mean**: `r format(mean(analytic_sample$median_income), scientific=FALSE)`  
+* **SD**:  `r format(sd(analytic_sample$median_income), scientific=FALSE)`
+
+##### Population in county
+* **Mean**: `r format(mean(analytic_sample$total_pop), scientific=FALSE)`  
+* **SD**:   `r format(sd(analytic_sample$total_pop), scientific=FALSE)`
+
+##### Percent White non-Hispanic residents in county
+* **Mean**: `r percent(mean(analytic_sample$pct_white), accuracy=.1)`  
+* **SD**:   `r percent(sd(analytic_sample$pct_white), accuracy=.1)`
+
+##### Percent residents in county 65+
+* **Mean**: `r percent(mean(analytic_sample$prop_65plus), accuracy=.1)`  
+* **SD**:   `r percent(sd(analytic_sample$prop_65plus), accuracy=.1)`  
+
+##### Time to reach pharmacist in seconds
+
+* **Mean**: `r round(mean(analytic_sample$waittime_sec, na.rm=TRUE), 1)` seconds
+* **SD**: `r round(sd(analytic_sample$waittime_sec, na.rm = TRUE), 1)`
+* **Number of missing time values**: `r sum(is.na(analytic_sample$waittime_sec))`  
+
+--------------------------------------------------------------------  
+
+### Summary of survey responses  
+
+
+```{r, results='asis', echo=FALSE}
+tab2 <- tableby(pharmtype ~ shing_avail + flu_avail + hdflu_avail, data=analytic_sample)
+
+summary(tab2, text=TRUE)
+
+```
+
+
+### Chi-square tests comparing dichotomous outcome (yes/no)
+
+--------------------------------------------------------------------
+
+
+#### Shingles vaccine availability
+
+```{r, results='asis'}
+tab1 <- tableby(shing_avail ~ pharmtype + nchs_code, data=analytic_sample)
+
+summary(tab1, text=TRUE)
+
+```
+
+Is there a relationship between pharmacy type and shingles availability?
+
+``` {r, echo = FALSE}
+table(analytic_sample$pharmtype,
+      analytic_sample$shing_avail)
+
+chi_shing <- chisq.test(x = table(analytic_sample$pharmtype,
+                                analytic_sample$shing_avail))
+
+chi_shing
+```
+
+
+
+#### Regular flu vaccine availability
+
+Is there a relationship between **pharmacy type** and regular-dose flu availability?
+```{r, echo = FALSE}
+table(analytic_sample$pharmtype,
+      analytic_sample$flu_avail)
+
+chi_flu <- chisq.test(x = table(analytic_sample$pharmtype,
+                                  analytic_sample$flu_avail))
+
+chi_flu
+
+```
+
+
+
+#### High-dose flu vaccine availability
+
+Is there a relationship between **pharmacy type** and hd flu availability?
+
+``` {r, echo = FALSE}
+table(analytic_sample$pharmtype,
+      analytic_sample$hdflu_avail)
+
+chi_hdflu <- chisq.test(x = table(analytic_sample$pharmtype,                analytic_sample$hdflu_avail))
+
+chi_hdflu
+```
+
+
+Is there a relationship between **rurality** and hd flu availability?
+```{r}
+table(analytic_sample$nchs_code,
+      analytic_sample$hdflu_avail)
+
+chi_rural <- chisq.test(x = table(analytic_sample$nchs_code,
+                                analytic_sample$hdflu_avail))
+
+chi_rural
+```
+
+
+#### Table 1
+
+```{r, echo=FALSE}
+
+table1(~ pharmtype + region + total_pop, data = analytic_sample)
+
+
+table1(~ shing_avail + flu_avail + hdflu_avail | pharmtype, data = analytic_sample)
+
+```
