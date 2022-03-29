@@ -11,7 +11,7 @@ This was a telephone audit survey study of a national sample of 480 chain and in
 | --- | ----------- |
 | analytic_sample.csv | final analytic sample including 384 pharmacies |
 | responses_coded.csv | thematically coded qualitative responses to the open-ended survey question |
-| survey_sample.csv | inclusion/exclusion codes for 480 pharmacies in sample |
+| survey_inclusion.csv | inclusion/exclusion codes for 480 pharmacies in sample |
 
 
 ## Code files
